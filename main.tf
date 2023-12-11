@@ -10,14 +10,14 @@ provider "azurerm" {
   features {}
 }
 
-resource "azurerm_resource_group" "arg" {
-  name     = "${var.resource_group_name}${random_integer.ri.result}"
-  location = var.resource_group_location
-}
-
 resource "random_integer" "ri" {
   min = 10000
   max = 99999
+}
+
+resource "azurerm_resource_group" "arg" {
+  name     = "${var.resource_group_name}${random_integer.ri.result}"
+  location = var.resource_group_location
 }
 
 resource "azurerm_service_plan" "asp" {
@@ -48,6 +48,13 @@ resource "azurerm_linux_web_app" "alwa" {
   }
 }
 
+resource "azurerm_app_service_source_control" "aassc" {
+  app_id                 = azurerm_linux_web_app.alwa.id
+  repo_url               = var.repo_URL
+  branch                 = "main"
+  use_manual_integration = true
+}
+
 resource "azurerm_mssql_server" "sqlserver" {
   name                         = "${var.sql_server_name}${random_integer.ri.result}"
   resource_group_name          = azurerm_resource_group.arg.name
@@ -71,11 +78,4 @@ resource "azurerm_mssql_firewall_rule" "sqlfr" {
   server_id        = azurerm_mssql_server.sqlserver.id
   start_ip_address = "0.0.0.0"
   end_ip_address   = "0.0.0.0"
-}
-
-resource "azurerm_app_service_source_control" "aassc" {
-  app_id                 = azurerm_linux_web_app.alwa.id
-  repo_url               = var.repo_URL
-  branch                 = "main"
-  use_manual_integration = true
 }
